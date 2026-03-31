@@ -24,6 +24,15 @@ tool = st.sidebar.radio(
     ["🎨 Background Change", "✨ Enhance Image"]
 )
 
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🎯 Advanced Tool")
+st.sidebar.markdown("👉 Use Erase Tool below")
+
+# 👉 Link to HTML tool
+st.sidebar.markdown(
+    "[🚀 Open Erase Tool](seev.htm)"
+)
+
 # =========================
 # MAIN
 # =========================
@@ -38,25 +47,21 @@ if uploaded_file:
         st.image(image, use_column_width=True)
 
     # =========================
-    # 🎨 BACKGROUND CHANGE (STABLE VERSION)
+    # 🎨 BACKGROUND CHANGE
     # =========================
     if tool == "🎨 Background Change":
         st.sidebar.subheader("🎨 Settings")
 
         color_hex = st.sidebar.color_picker("Pick Background Color", "#00ffaa")
-
-        # Convert hex to RGB
         color = tuple(int(color_hex[i:i+2], 16) for i in (1, 3, 5))
 
         if st.sidebar.button("🚀 Apply Background"):
             with st.spinner("Processing..."):
                 img_array = np.array(image)
 
-                # Simple background detection (bright areas)
                 gray = np.mean(img_array, axis=2)
-                mask = gray > 200  # adjust threshold if needed
+                mask = gray > 200
 
-                # Apply new color
                 img_array[mask] = color
 
                 result = Image.fromarray(img_array)
@@ -65,15 +70,10 @@ if uploaded_file:
                 st.subheader("✅ Result")
                 st.image(result, use_column_width=True)
 
-            # Download
             buf = io.BytesIO()
             result.save(buf, format="PNG")
 
-            st.download_button(
-                "📥 Download Image",
-                buf.getvalue(),
-                "background.png"
-            )
+            st.download_button("📥 Download", buf.getvalue(), "background.png")
 
     # =========================
     # ✨ ENHANCE IMAGE
@@ -94,21 +94,13 @@ if uploaded_file:
                 st.subheader("✅ Result")
                 st.image(result, use_column_width=True)
 
-            # Download
             buf = io.BytesIO()
             result.save(buf, format="PNG")
 
-            st.download_button(
-                "📥 Download Image",
-                buf.getvalue(),
-                "enhanced.png"
-            )
+            st.download_button("📥 Download", buf.getvalue(), "enhanced.png")
 
 else:
     st.info("👈 Upload an image from the sidebar to begin")
 
-# =========================
-# FOOTER
-# =========================
 st.markdown("---")
 st.caption("🚀 Built with Streamlit")
