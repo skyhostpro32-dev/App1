@@ -2,63 +2,54 @@ import streamlit as st
 from PIL import Image, ImageFilter
 import numpy as np
 import io
-import cv2
 from streamlit_drawable_canvas import st_canvas
 
-# =========================
-# CONFIG
-# =========================
 st.set_page_config(page_title="AI Image Dashboard", layout="wide")
 st.title("✨ AI Image Dashboard")
 
-# =========================
-# SIDEBAR
-# =========================
+# Sidebar
 st.sidebar.title("🧰 Tools")
 
-uploaded_file = st.sidebar.file_uploader(
-    "📤 Upload Image", type=["png", "jpg", "jpeg"]
-)
+uploaded_file = st.sidebar.file_uploader("Upload Image", type=["png","jpg","jpeg"])
 
 tool = st.sidebar.radio(
     "Select Tool",
-    ["🎨 Background Change", "✨ Enhance Image", "🧠 Inpaint (Remove Object)"]
+    ["🎨 Background Change", "✨ Enhance Image", "🎯 Smart Erase"]
 )
 
 col1, col2 = st.columns(2)
 
 if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    image.thumbnail((600, 600))
+    image = Image.open(uploaded_file).convert("RGBA")
+    image.thumbnail((600,600))
 
     with col1:
-        st.subheader("📸 Original")
-        st.image(image, use_column_width=True)
+        st.subheader("Original")
+        st.image(image)
 
     # =========================
-    # 🎨 BACKGROUND CHANGE
+    # BACKGROUND CHANGE
     # =========================
     if tool == "🎨 Background Change":
         color_hex = st.sidebar.color_picker("Pick Color", "#00ffaa")
-        color = tuple(int(color_hex[i:i+2], 16) for i in (1, 3, 5))
+        color = tuple(int(color_hex[i:i+2], 16) for i in (1,3,5))
 
         if st.sidebar.button("Apply"):
             img_array = np.array(image)
-            gray = np.mean(img_array, axis=2)
+            gray = np.mean(img_array[:,:,:3], axis=2)
             mask = gray > 200
-            img_array[mask] = color
+            img_array[mask] = (*color,255)
 
             result = Image.fromarray(img_array)
 
             with col2:
-                st.subheader("✅ Result")
                 st.image(result)
 
     # =========================
-    # ✨ ENHANCE
+    # ENHANCE
     # =========================
     elif tool == "✨ Enhance Image":
-        strength = st.sidebar.slider("Sharpness", 1, 5, 2)
+        strength = st.sidebar.slider("Sharpness",1,5,2)
 
         if st.sidebar.button("Enhance"):
             result = image
@@ -66,22 +57,20 @@ if uploaded_file:
                 result = result.filter(ImageFilter.SHARPEN)
 
             with col2:
-                st.subheader("✅ Result")
                 st.image(result)
 
     # =========================
-    # 🧠 INPAINT TOOL (REPLACES ERASE)
+    # SMART ERASE (NO CV2)
     # =========================
-    elif tool == "🧠 Inpaint (Remove Object)":
+    elif tool == "🎯 Smart Erase":
 
-        st.sidebar.subheader("🎯 Draw to Remove Object")
-        brush_size = st.sidebar.slider("Brush Size", 10, 50, 25)
+        brush_size = st.sidebar.slider("Brush Size",10,50,25)
 
         canvas = st_canvas(
             fill_color="rgba(255,0,0,0.4)",
             stroke_width=brush_size,
             stroke_color="white",
-            background_image=image,
+            background_image=image.convert("RGB"),
             update_streamlit=True,
             height=image.height,
             width=image.width,
@@ -90,35 +79,29 @@ if uploaded_file:
         )
 
         if canvas.image_data is not None:
+            img_array = np.array(image)
 
-            # Convert to OpenCV format
-            img_np = np.array(image)
-            mask = canvas.image_data[:, :, 3]
+            mask = canvas.image_data[:,:,3] > 0
 
-            # Create binary mask
-            mask = (mask > 0).astype("uint8") * 255
+            # erase (transparent)
+            img_array[mask] = [255,255,255,0]
 
-            # Apply inpainting
-            result_cv = cv2.inpaint(img_np, mask, 3, cv2.INPAINT_TELEA)
+            result = Image.fromarray(img_array)
 
-            result = Image.fromarray(result_cv)
+            # 🔥 smooth fill effect (fake inpaint)
+            result = result.filter(ImageFilter.GaussianBlur(2))
 
             with col2:
-                st.subheader("✅ Inpaint Result")
-                st.image(result, use_column_width=True)
+                st.subheader("Result")
+                st.image(result)
 
-            # Download
             buf = io.BytesIO()
             result.save(buf, format="PNG")
 
-            st.download_button(
-                "📥 Download",
-                buf.getvalue(),
-                "inpaint.png"
-            )
+            st.download_button("Download", buf.getvalue(), "result.png")
 
 else:
-    st.info("👈 Upload image from sidebar")
+    st.info("Upload image")
 
 st.markdown("---")
-st.caption("🚀 Built with Streamlit")
+st.caption("Built with Streamlit")
