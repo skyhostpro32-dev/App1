@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Three-Stage Inpainting Tool</title>
+  <style>
+    canvas { border: 1px solid black; cursor: crosshair; margin: 10px; }
+    #download { display: none; margin-top: 10px; }
+  </style>
+  <!-- Load OpenCV.js -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+</head>
+<body>
+  <h2>Original → Masked → Background Filled</h2>
+  <input type="file" id="upload" accept="image/*"><br>
+  <button id="applyBtn">Apply Background Fill</button>
+  <a id="download" download="edited.png">Download Edited Image</a><br>
+
+  <canvas id="original"></canvas>
+  <canvas id="masked"></canvas>
+  <canvas id="edited"></canvas>
+
+  <script>
+    const upload = document.getElementById("upload");
+    const original = document.getElementById("original");
+    const masked = document.getElementById("masked");
+    const edited = document.getElementById("edited");
+    const ctxO = original.getContext("2d");
+    const ctxM = masked.getContext("2d");
+    let img = new Image();
+    let maskSpots = [];
+
+    // Upload image
+    upload.onchange = e => {
+      const file = e.target.files[0];
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        [original, masked, edited].forEach(c => {
+          c.width = img.width;
+          c.height = img.height;
+        });
+        ctxO.drawImage(img, 0, 0); // original
+        ctxM.drawImage(img, 0, 0); // masked
+        let ctxE = edited.getContext("2d");
+        ctxE.drawImage(img, 0, 0); // edited
+      };
+    };
+
+    // Click to add mask spot
+    masked.onclick = e => {
+      const rect = masked.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      maskSpots.push({x, y});
+
+      // redraw masked canvas with red overlay
+      ctxM.drawImage(img, 0, 0);
+      ctxM.fillStyle = "rgba(255,0,0,0.5)";
+      maskSpots.forEach(s => {
+        ctxM.beginPath();
+        ctxM.arc(s.x, s.y, 30, 0, Math.PI * 2);
+        ctxM.fill();
+      });
+    };
+
+    // Apply inpainting (background fill)
+    document.getElementById("applyBtn").onclick = () => {
+      if (typeof cv === "undefined") {
+        alert("OpenCV.js not loaded yet!");
+        return;
+      }
+
+      let src = cv.imread(original); // original image
+      let mask = new cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC1);
+
+      // Build mask for OpenCV
+      maskSpots.forEach(s => {
+        cv.circle(mask, new cv.Point(s.x, s.y), 30, new cv.Scalar(255, 255, 255, 255), -1);
+      });
+
+      let dst = new cv.Mat();
+      cv.inpaint(src, mask, dst, 3, cv.INPAINT_TELEA);
+
+      cv.imshow(edited, dst); // show result in third canvas
+
+      src.delete(); mask.delete(); dst.delete();
+
+      // Show download link
+      const download = document.getElementById("download");
+      download.href = edited.toDataURL("image/png");
+      download.style.display = "inline";
+    };
+  </script>
+</body>
+</html>
