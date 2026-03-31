@@ -30,7 +30,7 @@ st.sidebar.markdown("👉 Use Erase Tool below")
 
 # 👉 Link to HTML tool
 st.sidebar.markdown(
-    "[🚀 Open Erase Tool](seev.htm)"
+    "[🚀 Open Erase Tool](https://github.com/skyhostpro32-dev/App1/blob/main/seev.htm)"
 )
 
 # =========================
