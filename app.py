@@ -36,7 +36,7 @@ st.sidebar.markdown(
     "[🚀 Open blurr Tool](https://skyhostpro32-dev.github.io/index./)"
 )
 st.sidebar.markdown(
-    "[🚀 Open Background Tool](https://l3c2ddsnh8gkka5rnezbak.streamlit.app/)"
+    "[🚀 Open Remove object Tool](https://l3c2ddsnh8gkka5rnezbak.streamlit.app/)"
 )
 st.sidebar.markdown(
     "[🚀 Open Background Tool](https://import-cus7p2zpohpwkbavzyrmpl.streamlit.app/)"
