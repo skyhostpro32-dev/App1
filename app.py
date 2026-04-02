@@ -32,7 +32,15 @@ st.sidebar.markdown("👉 Use Erase Tool below")
 st.sidebar.markdown(
     "[🚀 Open Erase Tool](https://skyhostpro32-dev.github.io/erase-tool/)"
 )
-
+st.sidebar.markdown(
+    "[🚀 Open blurr Tool](https://skyhostpro32-dev.github.io/index./)"
+)
+st.sidebar.markdown(
+    "[🚀 Open Background Tool](https://l3c2ddsnh8gkka5rnezbak.streamlit.app/)"
+)
+st.sidebar.markdown(
+    "[🚀 Open Background Tool](https://import-cus7p2zpohpwkbavzyrmpl.streamlit.app/)"
+)
 # =========================
 # MAIN
 # =========================
